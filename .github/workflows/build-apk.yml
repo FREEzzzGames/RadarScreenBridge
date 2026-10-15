@@ -1,4 +1,4 @@
-name: Build Android APK
+name: Build d3tr01t Holdem APK
 on:
   workflow_dispatch:
   push:
@@ -23,8 +23,10 @@ jobs:
           gradle-version: '8.9'
       - name: Build debug APK
         run: gradle assembleDebug
-      - name: Upload APK artifact
-        uses: actions/upload-artifact@v4
+      - name: Verify APK exists
+        run: test -s app/build/outputs/apk/debug/app-debug.apk
+      - uses: actions/upload-artifact@v4
         with:
-          name: RadarScreenBridge-debug-apk
+          name: d3tr01t-holdem-apk
           path: app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
