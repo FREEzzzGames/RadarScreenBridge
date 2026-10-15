@@ -44,7 +44,7 @@ class MainActivity : Activity() {
         }
         status = TextView(this).apply { text = "Radar Screen Bridge — тест"; textSize = 18f }
         val info = TextView(this).apply {
-            text = "Тестовый режим: захват экрана Android. Нажатие кнопки часов сработает только если приложение-компаньон отправляет стандартный Android camera intent. Передача изображения на часы ещё не реализована."
+            text = "Прототип: захват экрана сохраняет последний уменьшенный кадр в Pictures/RadarScreenBridge/screen_preview.jpg. Этот файл можно выбрать в Mi Fitness как фон альбомного циферблата. Важно: штатный циферблат может показать только выбранный снимок; непрерывная передача кадров на часы пока не реализована. Команда камеры с часов сработает только если Mi Fitness действительно отправляет стандартный Android camera intent."
             textSize = 14f
             setPadding(0, 16, 0, 16)
         }
