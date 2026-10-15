@@ -126,6 +126,7 @@ async function advanceStreet(){
 }
 function awardUncontested(){const winner=players.findIndex((p,i)=>!folded[i]&&!p.out);if(winner<0){showdown();return}players[winner].chips+=pot;say(players[winner].name+' забирает банк '+fmt(pot)+'/ без вскрытия.');pot=0;endHand()}
 function showdown(){
+ street=4;render();
  const contenders=players.map((p,i)=>({p,i})).filter(x=>!folded[x.i]&&!x.p.out);if(!contenders.length){endHand();return}
  // Side pots are built from each player's total contribution, including folded players.
  let levels=[...new Set(contrib.filter(n=>n>0))].sort((a,b)=>a-b),prev=0;
@@ -153,6 +154,6 @@ $('bet').oninput=updateBet;$('minus').onclick=()=>{$('bet').value=Math.max(Numbe
 $('start').onclick=setup;$('new').onclick=()=>{$('modal').classList.remove('hidden');$('modal').querySelector('h2').textContent='Новый турнир';$('modal').querySelector('p').textContent='Все стеки будут сброшены до 1 500 фишек. Начать заново?';$('start').textContent='Начать турнир';running=false;waiting=false};
 $('speed').onclick=()=>{fast=!fast;$('speed').textContent='Боты: '+(fast?'быстро':'обычно')};
 $('hint').onclick=()=>{if(!players.length||!players[0].cards.length){say('Начни турнир, чтобы получить разбор.');return}const s=preflopStrength(players[0].cards),v=board.length>=3?bestHand(players[0].cards,board):null;let advice=s>.68?'Сильная стартовая рука: чаще играй агрессивно, но учитывай позицию и размер рейза.':s>.45?'Средняя рука: оцени позицию, размер рейза и количество соперников.':'Слабая рука: чаще фолдь против крупного рейза, особенно без позиции.';if(v)advice+=' Текущая комбинация: '+HAND_NAMES[v[0]]+'.';say('Разбор: '+advice)};
-setup();$('modal').classList.remove('hidden');
+players=Array.from({length:9},(_,i)=>({name:i===0?'ТЫ':['Тайтовый','Агрессор','Скала','Коллер','Регуляр','Снайпер','Маньяк','Адаптивный'][i-1],chips:START,out:false,style:['human','tightAgg','looseAgg','rock','caller','balanced','nit','maniac','adaptive'][i],cards:[],total:0,street:0,acted:false}));render();$('modal').classList.remove('hidden');
 })();
 </script></body></html>
