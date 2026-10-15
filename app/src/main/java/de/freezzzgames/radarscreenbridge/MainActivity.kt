@@ -1,101 +1,71 @@
 package de.freezzzgames.radarscreenbridge
 
 import android.app.Activity
-import android.content.Intent
-import android.media.projection.MediaProjectionManager
+import android.content.pm.ActivityInfo
+import android.graphics.Color
 import android.os.Bundle
-import android.widget.Button
-import android.widget.ImageView
-import android.widget.LinearLayout
-import android.widget.TextView
-import android.view.ViewGroup
-import android.graphics.BitmapFactory
-import android.os.Handler
-import android.os.Looper
-import java.io.File
+import android.view.View
+import android.view.WindowManager
+import android.webkit.WebChromeClient
+import android.webkit.WebSettings
+import android.webkit.WebView
+import android.webkit.WebViewClient
 
 class MainActivity : Activity() {
-    private val requestCapture = 41
-    private lateinit var status: TextView
-    private lateinit var preview: ImageView
-    private val handler = Handler(Looper.getMainLooper())
-    private val cameraActions = setOf(
-        "android.media.action.IMAGE_CAPTURE",
-        "android.media.action.STILL_IMAGE_CAMERA"
-    )
-    private val refresh = object : Runnable {
-        override fun run() {
-            val file = File(cacheDir, "screen_preview.jpg")
-            if (file.exists() && file.length() > 0) {
-                BitmapFactory.decodeFile(file.absolutePath)?.let { bitmap ->
-                    preview.setImageBitmap(bitmap)
-                    status.text = "Захват активен • ${bitmap.width}×${bitmap.height}"
-                }
-            }
-            handler.postDelayed(this, 700)
-        }
+    private lateinit var webView: WebView
+
+    @Suppress("DEPRECATION")
+    private fun immersive() {
+        window.decorView.systemUiVisibility =
+            (View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                or View.SYSTEM_UI_FLAG_FULLSCREEN
+                or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                or View.SYSTEM_UI_FLAG_LAYOUT_STABLE)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val root = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(24, 28, 24, 24)
-        }
-        status = TextView(this).apply { text = "Radar Screen Bridge — тест"; textSize = 18f }
-        val info = TextView(this).apply {
-            text = "Прототип: захват экрана сохраняет последний уменьшенный кадр в Pictures/RadarScreenBridge/screen_preview.jpg. Этот файл можно выбрать в Mi Fitness как фон альбомного циферблата. Важно: штатный циферблат может показать только выбранный снимок; непрерывная передача кадров на часы пока не реализована. Команда камеры с часов сработает только если Mi Fitness действительно отправляет стандартный Android camera intent."
-            textSize = 14f
-            setPadding(0, 16, 0, 16)
-        }
-        val start = Button(this).apply {
-            text = "Запустить захват экрана"
-            setOnClickListener { requestScreenCapture() }
-        }
-        val stop = Button(this).apply {
-            text = "Остановить захват"
-            setOnClickListener {
-                stopService(Intent(this@MainActivity, CaptureService::class.java))
-                status.text = "Захват остановлен"
-            }
-        }
-        preview = ImageView(this).apply { adjustViewBounds = true; scaleType = ImageView.ScaleType.FIT_CENTER }
-        root.addView(status)
-        root.addView(info)
-        root.addView(start)
-        root.addView(stop)
-        root.addView(preview, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f))
-        setContentView(root)
-        handler.post(refresh)
+        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        immersive()
 
-        if (intent?.action in cameraActions) {
-            status.text = "Получена команда камеры • запрос разрешения на захват"
-            root.postDelayed({ requestScreenCapture() }, 350)
+        webView = WebView(this)
+        webView.setBackgroundColor(Color.rgb(5, 8, 7))
+        webView.isVerticalScrollBarEnabled = false
+        webView.isHorizontalScrollBarEnabled = false
+        webView.overScrollMode = View.OVER_SCROLL_NEVER
+        webView.settings.apply {
+            javaScriptEnabled = true
+            domStorageEnabled = true
+            databaseEnabled = true
+            allowFileAccess = true
+            allowContentAccess = true
+            setSupportZoom(false)
+            builtInZoomControls = false
+            displayZoomControls = false
+            cacheMode = WebSettings.LOAD_DEFAULT
         }
+        webView.webViewClient = WebViewClient()
+        webView.webChromeClient = WebChromeClient()
+        setContentView(webView)
+        webView.loadUrl("file:///android_asset/index.html")
     }
 
-    private fun requestScreenCapture() {
-        val mgr = getSystemService(MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
-        startActivityForResult(mgr.createScreenCaptureIntent(), requestCapture)
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        if (hasFocus) immersive()
     }
 
-    @Deprecated("Deprecated in Android API")
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == requestCapture && resultCode == RESULT_OK && data != null) {
-            val svc = Intent(this, CaptureService::class.java).apply {
-                putExtra("resultCode", resultCode)
-                putExtra("data", data)
-            }
-            startForegroundService(svc)
-            status.text = "Разрешение получено, запуск захвата…"
-        } else if (requestCode == requestCapture) {
-            status.text = "Захват не запущен: разрешение не предоставлено"
-        }
+    @Deprecated("Deprecated in Java")
+    override fun onBackPressed() {
+        if (::webView.isInitialized && webView.canGoBack()) webView.goBack()
+        else super.onBackPressed()
     }
 
     override fun onDestroy() {
-        handler.removeCallbacks(refresh)
+        if (::webView.isInitialized) webView.destroy()
         super.onDestroy()
     }
 }
