@@ -105,12 +105,12 @@ async function botAct(i){
 }
 function preflopStrength(h){if(h.length<2)return .2;let a=h[0].v,b=h[1].v,hi=Math.max(a,b),lo=Math.min(a,b),pair=a===b,suited=h[0].s===h[1].s,gap=hi-lo;let s=(hi-2)/12*.35+(lo-2)/12*.18;if(pair)s=.48+(hi-2)/12*.45;if(suited)s+=.045;if(gap===1)s+=.055;if(gap>=4)s-=.12;if(hi===14)s+=.12;if(hi===13&&lo>=10)s+=.08;return Math.max(.04,Math.min(.98,s))}
 function handStrength(h,b){const v=bestHand(h,b);return Math.min(.98,.18+v[0]*.085+(v[1]||2)/160)}
-function doRaise(i,raiseBy){const call=toCall(i);if(call)pay(i,call);const actual=Math.min(players[i].chips,Math.max(minRaise,raiseBy));pay(i,actual);highBet=roundBet[i];minRaise=Math.max(minRaise,actual);players.forEach((p,j)=>{if(j!==i&&eligible(j))p.acted=false});players[i].acted=true}
+function doRaise(i,raiseBy){const oldHigh=highBet;const call=toCall(i);if(call)pay(i,call);const requested=Math.max(minRaise,Number(raiseBy)||minRaise);const actual=Math.min(players[i].chips,requested);if(actual>0)pay(i,actual);const newBet=roundBet[i];if(newBet>oldHigh){const raiseSize=newBet-oldHigh;highBet=newBet;if(raiseSize>=minRaise){minRaise=raiseSize;players.forEach((p,j)=>{if(j!==i&&eligible(j)&&!allin[j])p.acted=false})}}players[i].acted=true}
 function humanAction(kind){
  if(!waiting||current!==0)return;waiting=false;const call=toCall(0),p=players[0];
  if(kind==='fold'){folded[0]=true;p.acted=true;say('Ты сбрасываешь карты.')}
  if(kind==='call'){const amt=pay(0,call);p.acted=true;say(amt?'Ты коллируешь '+fmt(amt)+'.':'Ты чекаешь.')}
- if(kind==='raise'){let amount=Math.max(minRaise,Number($('bet').value)||minRaise);if(call===0){pay(0,0)}else pay(0,call);amount=Math.min(p.chips,amount);if(amount<=0){p.acted=true}else{pay(0,amount);highBet=roundBet[0];minRaise=Math.max(minRaise,amount);players.forEach((q,j)=>{if(j!==0&&eligible(j))q.acted=false});p.acted=true;say('Ты повышаешь до '+fmt(roundBet[0])+'.')}}
+ if(kind==='raise'){const oldHigh=highBet;let amount=Math.max(minRaise,Number($('bet').value)||minRaise);if(call>0)pay(0,call);amount=Math.min(p.chips,amount);if(amount<=0){p.acted=true;say('Ты идёшь олл-ин / коллируешь доступным стеком.')}else{pay(0,amount);const newBet=roundBet[0];if(newBet>oldHigh){const raiseSize=newBet-oldHigh;highBet=newBet;if(raiseSize>=minRaise){minRaise=raiseSize;players.forEach((q,j)=>{if(j!==0&&eligible(j)&&!allin[j])q.acted=false})}}p.acted=true;say(players[0].chips===0?'Ты идёшь олл-ин до '+fmt(newBet)+'.':'Ты повышаешь до '+fmt(newBet)+'.')}}
  render();actLoop(1)
 }
 async function advanceStreet(){
