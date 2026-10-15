@@ -7,9 +7,12 @@ import android.os.Bundle
 import android.view.View
 import android.view.WindowManager
 import android.webkit.WebChromeClient
+import android.webkit.WebResourceRequest
+import android.webkit.WebResourceResponse
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import java.io.IOException
 
 class MainActivity : Activity() {
     private lateinit var webView: WebView
@@ -32,7 +35,7 @@ class MainActivity : Activity() {
         immersive()
 
         webView = WebView(this)
-        webView.setBackgroundColor(Color.rgb(5, 8, 7))
+        webView.setBackgroundColor(Color.rgb(16, 21, 17))
         webView.isVerticalScrollBarEnabled = false
         webView.isHorizontalScrollBarEnabled = false
         webView.overScrollMode = View.OVER_SCROLL_NEVER
@@ -40,17 +43,53 @@ class MainActivity : Activity() {
             javaScriptEnabled = true
             domStorageEnabled = true
             databaseEnabled = true
-            allowFileAccess = true
-            allowContentAccess = true
+            allowFileAccess = false
+            allowContentAccess = false
             setSupportZoom(false)
             builtInZoomControls = false
             displayZoomControls = false
-            cacheMode = WebSettings.LOAD_DEFAULT
+            cacheMode = WebSettings.LOAD_NO_CACHE
         }
-        webView.webViewClient = WebViewClient()
+        webView.webViewClient = object : WebViewClient() {
+            override fun shouldInterceptRequest(
+                view: WebView,
+                request: WebResourceRequest
+            ): WebResourceResponse? {
+                val uri = request.url
+                if (uri.scheme != "https" || uri.host != "freezzz.local") {
+                    return super.shouldInterceptRequest(view, request)
+                }
+
+                val requestedPath = uri.path.orEmpty().removePrefix("/")
+                val assetPath = if (requestedPath.isBlank() || requestedPath == "index.html") {
+                    "index.html"
+                } else {
+                    requestedPath
+                }
+                return try {
+                    val mime = when {
+                        assetPath.endsWith(".html") -> "text/html"
+                        assetPath.endsWith(".css") -> "text/css"
+                        assetPath.endsWith(".js") -> "application/javascript"
+                        assetPath.endsWith(".png") -> "image/png"
+                        assetPath.endsWith(".jpg") || assetPath.endsWith(".jpeg") -> "image/jpeg"
+                        assetPath.endsWith(".svg") -> "image/svg+xml"
+                        assetPath.endsWith(".woff2") -> "font/woff2"
+                        else -> "application/octet-stream"
+                    }
+                    WebResourceResponse(
+                        mime,
+                        "UTF-8",
+                        assets.open(assetPath)
+                    )
+                } catch (_: IOException) {
+                    WebResourceResponse("text/plain", "UTF-8", 404, "Not Found", emptyMap(), null)
+                }
+            }
+        }
         webView.webChromeClient = WebChromeClient()
         setContentView(webView)
-        webView.loadUrl("file:///android_asset/index.html")
+        webView.loadUrl("https://freezzz.local/index.html")
     }
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {
