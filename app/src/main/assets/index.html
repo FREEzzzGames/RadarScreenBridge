@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#101511"><title>Hold'em Trainer</title>
+<style>
+:root{color-scheme:dark;--bg:#101511;--panel:#1b241e;--green:#174a35;--felt:#1d6547;--gold:#f0c96a;--muted:#a9b8ad;--red:#e66b68}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:#f4f7f3;font:14px system-ui,-apple-system,sans-serif;min-height:100dvh}button,input{font:inherit}button{border:0;border-radius:12px;min-height:44px;padding:10px 13px;background:#29362e;color:#fff;font-weight:750;touch-action:manipulation}button:disabled{opacity:.35}button.primary{background:var(--gold);color:#172017}button.danger{background:#693533}#app{max-width:760px;margin:auto;padding:env(safe-area-inset-top) 12px calc(12px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:10px;min-height:100dvh}.top{display:flex;align-items:center;justify-content:space-between;gap:8px}.brand{font-weight:900;letter-spacing:.08em}.sub{font-size:11px;color:var(--muted)}.stats{display:flex;gap:8px}.stat{background:var(--panel);padding:7px 10px;border-radius:10px;font-size:12px}.stat b{display:block;font-size:16px}.table{background:radial-gradient(ellipse at center,#277653 0%,#1b5d41 55%,#113b2b 100%);border:5px solid #4c3829;border-radius:48% / 30%;padding:12px 8px;min-height:310px;position:relative;display:flex;flex-direction:column;justify-content:space-between;gap:8px;box-shadow:inset 0 0 0 2px #8d6742,0 8px 20px #0005}.seats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}.seat{min-width:0;text-align:center;padding:7px 3px 5px;border-radius:10px;background:#0e211bbd;border:1px solid #ffffff15;position:relative}.seat.active{border:2px solid var(--gold);padding:6px 2px 4px}.seat.out{opacity:.34;filter:grayscale(1)}.name{font-size:11px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.stack{font-size:12px;color:#f6d77e;font-weight:800}.cards{display:flex;justify-content:center;gap:3px;margin:4px 0;min-height:38px}.card{background:#f8f6ef;color:#17201a;border-radius:5px;width:25px;height:36px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:900;font-size:15px;box-shadow:0 1px 2px #0006;line-height:1}.card.red{color:#cb3e44}.card.back{background:repeating-linear-gradient(45deg,#254f82,#254f82 4px,#dce5e8 4px,#dce5e8 6px);border:2px solid #f8f6ef;color:transparent}.dealer{position:absolute;top:3px;right:4px;border-radius:50%;background:#f3e7c4;color:#222;width:17px;height:17px;font-size:10px;font-weight:900;display:grid;place-items:center}.middle{text-align:center;padding:0 0 5px}.pot{font-size:13px;color:#f8dc8a;font-weight:800}.board{display:flex;justify-content:center;gap:5px;margin:7px 0;min-height:58px}.board .card{width:38px;height:54px;font-size:21px;border-radius:6px}.message{font-size:12px;min-height:17px;color:#e4f0e6}.player{background:#202b24;border:1px solid #526357;border-radius:16px;padding:10px}.playerhead{display:flex;justify-content:space-between;align-items:center}.hole{display:flex;gap:8px;justify-content:center;margin:8px}.hole .card{width:48px;height:67px;font-size:27px;border-radius:8px}.controls{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}.betrow{display:grid;grid-template-columns:44px 1fr 44px;gap:7px;align-items:center;margin:8px 0}.betrow button{font-size:20px;padding:5px}.betrow input{width:100%;accent-color:var(--gold)}.betlabel{display:flex;justify-content:space-between;font-size:12px;color:var(--muted)}.bottomrow{display:flex;gap:7px}.bottomrow button{flex:1}.log{background:#171e19;border-radius:12px;padding:9px 11px;font-size:12px;color:#c1cec4;max-height:85px;overflow:auto}.log div{margin:3px 0}.modal{position:fixed;inset:0;background:#000b;display:grid;place-items:center;padding:20px;z-index:5}.dialog{width:min(420px,100%);background:#1b241e;border:1px solid #435447;border-radius:18px;padding:20px}.dialog h2{margin:0 0 8px}.dialog p{color:#bdc9bf;line-height:1.5}.dialog button{width:100%;margin-top:8px}.hidden{display:none!important}.badge{color:var(--gold);font-size:10px}.note{font-size:11px;color:#9eafa3;text-align:center}
+@media(min-width:600px){.table{min-height:365px;padding:16px 22px}.seat{padding:9px 5px}.name{font-size:12px}.card{width:29px;height:40px}.board .card{width:44px;height:61px}.hole .card{width:54px;height:76px}}
+</style></head>
+<body><main id="app">
+<header class="top"><div><div class="brand">HOLD'EM <span style="color:var(--gold)">TRAINER</span></div><div class="sub">Турнир на вылет · 9 игроков</div></div><div class="stats"><div class="stat">Уровень<b id="level">1 / 10</b></div><div class="stat">Живы<b id="alive">9</b></div></div></header>
+<section class="table"><div class="seats" id="seats"></div><div class="middle"><div class="pot" id="pot">Банк: 0</div><div class="board" id="board"></div><div class="message" id="message">Подготовка стола…</div></div></section>
+<section class="player"><div class="playerhead"><div><b id="playerName">Ты · BTN</b><div class="sub" id="playerMeta">Стек 1 500</div></div><span class="badge" id="turnBadge">ТВОЙ ХОД</span></div><div class="hole" id="hole"></div><div class="betlabel"><span>Размер рейза</span><b id="betValue">100</b></div><div class="betrow"><button id="minus" aria-label="Уменьшить ставку">−</button><input id="bet" type="range" min="40" max="1500" step="20" value="100" aria-label="Размер ставки"><button id="plus" aria-label="Увеличить ставку">+</button></div><div class="controls"><button class="danger" id="fold">Фолд</button><button id="call">Чек</button><button class="primary" id="raise">Рейз</button></div></section>
+<div class="bottomrow"><button id="new">Новый турнир</button><button id="hint">Разбор руки</button><button id="speed">Боты: обычно</button></div>
+<section class="log" id="log" aria-live="polite"><div>Добро пожаловать. Все игроки начинают с одинаковым стеком.</div></section><div class="note">Учебная симуляция · без денег и покупок · действия ботов моделируют разные стратегии</div>
+</main><div class="modal" id="modal"><div class="dialog"><h2>Texas Hold’em Trainer</h2><p>Турнир из 9 игроков. Каждый начинает с 1 500 фишек. Цель — остаться последним за столом.</p><p>Выбирай фолд, чек/колл или рейз. Смотри, как меняются решения соперников по мере роста блайндов и сокращения стеков.</p><button class="primary" id="start">Начать турнир</button></div></div>
+<script>
+(()=>{'use strict';
+const $=id=>document.getElementById(id), SUITS=['♠','♥','♦','♣'], RANKS='23456789TJQKA', START=1500;
+let players=[],deck=[],board=[],pot=0,street=0,handNo=0,dealer=0,current=-1,highBet=0,minRaise=40,contrib=[],roundBet=[],folded=[],allin=[],hole=[],running=false,waiting=false,fast=false,history=[],lastResult='',handStartStacks=[];
+const sleep=ms=>new Promise(r=>setTimeout(r,fast?Math.min(90,ms):ms));
+const fmt=n=>Math.max(0,Math.round(n)).toLocaleString('ru-RU');
+function say(s){$('message').textContent=s; $('log').insertAdjacentHTML('afterbegin','<div>'+esc(s)+'</div>');while($('log').children.length>12)$('log').lastChild.remove()}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+function card(r,s){return {r,s,v:RANKS.indexOf(r)+2}}
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function freshDeck(){return shuffle(RANKS.split('').flatMap(r=>SUITS.map(s=>card(r,s))))}
+function cardHTML(c,back=false){if(back)return '<div class="card back">◆</div>';return '<div class="card '+('♥♦'.includes(c.s)?'red':'')+'">'+c.r.replace('T','10')+'<span style="font-size:.72em">'+c.s+'</span></div>'}
+function evaluate(cards){
+ const counts={},suits={};cards.forEach(c=>{counts[c.v]=(counts[c.v]||0)+1;(suits[c.s]??=[]).push(c.v)});
+ const vals=Object.keys(counts).map(Number).sort((a,b)=>b-a),groups=vals.map(v=>({v,n:counts[v]})).sort((a,b)=>b.n-a.n||b.v-a.v);
+ function straight(vs){const u=[...new Set(vs)].sort((a,b)=>b-a);if(u[0]===14)u.push(1);for(let i=0;i<=u.length-5;i++)if(u[i]-u[i+4]===4)return u[i];return 0}
+ let sf=0;for(const s of SUITS){const vs=suits[s]||[];if(vs.length>=5)sf=Math.max(sf,straight(vs))}
+ if(sf)return [8,sf];
+ const four=groups.find(g=>g.n===4);if(four)return [7,four.v,...vals.filter(v=>v!==four.v).slice(0,1)];
+ const trips=groups.filter(g=>g.n>=3).map(g=>g.v),pairs=groups.filter(g=>g.n>=2).map(g=>g.v);
+ if(trips.length&& (pairs.some(v=>v!==trips[0])||trips.length>1))return [6,trips[0],Math.max(...pairs.filter(v=>v!==trips[0]),...trips.slice(1))];
+ let flush=[];for(const s of SUITS){const vs=(suits[s]||[]).sort((a,b)=>b-a);if(vs.length>=5&&vs.length>flush.length)flush=vs.slice(0,5)}
+ if(flush.length)return [5,...flush];
+ const st=straight(vals);if(st)return [4,st];
+ if(trips.length)return [3,trips[0],...vals.filter(v=>v!==trips[0]).slice(0,2)];
+ const pairVals=pairs; if(pairVals.length>=2){const p=pairVals.slice(0,2);return [2,...p, ...vals.filter(v=>!p.includes(v)).slice(0,1)]}
+ if(pairVals.length===1)return [1,pairVals[0],...vals.filter(v=>v!==pairVals[0]).slice(0,3)];
+ return [0,...vals.slice(0,5)]
+}
+const HAND_NAMES=['Старшая карта','Пара','Две пары','Тройка','Стрит','Флеш','Фулл-хаус','Каре','Стрит-флеш'];
+function cmp(a,b){for(let i=0;i<Math.max(a.length,b.length);i++){let d=(a[i]||0)-(b[i]||0);if(d)return Math.sign(d)}return 0}
+function bestHand(h,b){const all=h.concat(b);if(all.length<5)return evaluate(all);let best=null;for(let a=0;a<all.length-4;a++)for(let c=a+1;c<all.length-3;c++)for(let d=c+1;d<all.length-2;d++)for(let e=d+1;e<all.length-1;e++)for(let f=e+1;f<all.length;f++){const v=evaluate([all[a],all[c],all[d],all[e],all[f]]);if(!best||cmp(v,best)>0)best=v}return best||evaluate(all)}
+function aliveIds(){return players.map((p,i)=>p.chips>0&&!p.out?i:-1).filter(i=>i>=0)}
+function activeIds(){return players.map((p,i)=>!folded[i]&&!p.out&&p.chips>0?-1:i).filter(i=>i>=0)}
+function nextSeat(from,fn){for(let n=1;n<=9;n++){let i=(from+n+9)%9;if(fn(i))return i}return -1}
+function eligible(i){return !folded[i]&&!players[i].out&&players[i].chips>0}
+function setup(){players=Array.from({length:9},(_,i)=>({name:i===0?'ТЫ':['Тайтовый','Агрессор','Скала','Коллер','Регуляр','Снайпер','Маньяк','Адаптивный'][i-1],chips:START,out:false,style:['human','tightAgg','looseAgg','rock','caller','balanced','nit','maniac','adaptive'][i],cards:[],total:0,street:0,acted:false}));dealer=0;handNo=0;running=true;history=[];say('Турнир начался. У всех по '+fmt(START)+' фишек.');$('modal').classList.add('hidden');startHand()}
+function startHand(){
+ if(!running)return;const alive=aliveIds();if(alive.length<=1){finish(alive[0]);return}
+ handNo++;street=0;deck=freshDeck();board=[];pot=0;current=-1;waiting=false;lastResult='';highBet=0;minRaise=40;
+ folded=players.map(p=>p.out||p.chips===0);allin=players.map(()=>false);contrib=players.map(()=>0);roundBet=players.map(()=>0);
+ players.forEach(p=>{p.cards=[];p.street=0;p.acted=false});
+ dealer=alive.includes(dealer)?dealer:alive[0];dealer=nextSeat(dealer,i=>!players[i].out&&players[i].chips>0);
+ for(const i of alive){players[i].cards=[deck.pop(),deck.pop()]}
+ const sb=nextSeat(dealer,i=>eligible(i)),bb=nextSeat(sb,i=>eligible(i));post(sb,20);post(bb,40);highBet=40;minRaise=40;
+ say('Раздача '+handNo+' · блайнды 20 / 40. Дилер: '+players[dealer].name+'.');
+ const first=nextSeat(bb,i=>eligible(i));render();actLoop(first)
+}
+function post(i,n){const amount=Math.min(n,players[i].chips);players[i].chips-=amount;roundBet[i]+=amount;contrib[i]+=amount;pot+=amount;if(players[i].chips===0)allin[i]=true}
+function canAct(i){return eligible(i)&&!allin[i]}
+function needsAction(i){return canAct(i)&&(!players[i].acted||roundBet[i]<highBet)}
+function pay(i,n){const amt=Math.min(n,players[i].chips);players[i].chips-=amt;roundBet[i]+=amt;contrib[i]+=amt;pot+=amt;if(players[i].chips===0)allin[i]=true;return amt}
+function toCall(i){return Math.max(0,highBet-roundBet[i])}
+function activeCount(){return players.filter((p,i)=>!folded[i]&&!p.out).length}
+function actLoop(first){
+ if(!running)return;
+ if(activeCount()<=1){awardUncontested();return}
+ const pending=players.some((p,i)=>needsAction(i));
+ if(!pending){advanceStreet();return}
+ let i=first;
+ for(let k=0;k<9;k++){if(needsAction(i))break;i=(i+1)%9}
+ if(!needsAction(i)){advanceStreet();return}
+ current=i;
+ if(i===0){waiting=true;render();showControls();return}
+ render();botAct(i).then(()=>{if(!running)return;actLoop((i+1)%9)})
+}
+async function botAct(i){
+ await sleep(520);if(!running||!needsAction(i))return;
+ const p=players[i],call=toCall(i),potOdds=call/(pot+call||1),pos=(i-dealer+9)%9;
+ const strength=preflopStrength(p.cards),made=board.length>=3?handStrength(p.cards,board):strength;
+ const stackRatio=p.chips/(pot+call+1),style=p.style;
+ let aggression={tightAgg:.72,looseAgg:.62,rock:.42,caller:.2,balanced:.5,nit:.22,maniac:.9,adaptive:.55}[style]??.5;
+ if(style==='adaptive')aggression=potOdds>.25?.28:.68;
+ let threshold={tightAgg:.47,looseAgg:.32,rock:.52,caller:.25,balanced:.39,nit:.58,maniac:.22,adaptive:.4}[style]??.4;
+ if(pos>=6)threshold-=.06;if(pos<=2)threshold+=.035;
+ if(board.length>=3)threshold=style==='nit'?.57:.38;
+ let equity=Math.min(.98,Math.max(.02,made+(Math.random()-.5)*.10));
+ const callOk=equity>potOdds+threshold*.22;
+ if(call===0){
+   if(equity>.65&&Math.random()<aggression*.7&&p.chips>highBet*2){let raise=Math.min(p.chips,Math.max(minRaise,Math.floor((pot*.45+40)/20)*20));doRaise(i,raise);say(p.name+' ставит '+fmt(raise)+'.')}
+   else{p.acted=true;say(p.name+' чекает.')}
+ }else if(!callOk&&equity<potOdds+threshold*.12&&Math.random()>(style==='maniac'?.2:.06)){
+   folded[i]=true;p.acted=true;say(p.name+' сбрасывает карты.');
+ }else if(equity>threshold+.28&&p.chips>call+minRaise&&Math.random()<aggression*.55){
+   pay(i,call);let raise=Math.min(p.chips,Math.max(minRaise,Math.floor((pot*.45+40)/20)*20));doRaise(i,raise);say(p.name+' коллирует и повышает до '+fmt(roundBet[i])+'.');
+ }else{pay(i,call);p.acted=true;say(p.name+' коллирует '+fmt(call)+'.')}
+ render()
+}
+function preflopStrength(h){if(h.length<2)return .2;let a=h[0].v,b=h[1].v,hi=Math.max(a,b),lo=Math.min(a,b),pair=a===b,suited=h[0].s===h[1].s,gap=hi-lo;let s=(hi-2)/12*.35+(lo-2)/12*.18;if(pair)s=.48+(hi-2)/12*.45;if(suited)s+=.045;if(gap===1)s+=.055;if(gap>=4)s-=.12;if(hi===14)s+=.12;if(hi===13&&lo>=10)s+=.08;return Math.max(.04,Math.min(.98,s))}
+function handStrength(h,b){const v=bestHand(h,b);return Math.min(.98,.18+v[0]*.085+(v[1]||2)/160)}
+function doRaise(i,raiseBy){const call=toCall(i);if(call)pay(i,call);const actual=Math.min(players[i].chips,Math.max(minRaise,raiseBy));pay(i,actual);highBet=roundBet[i];minRaise=Math.max(minRaise,actual);players.forEach((p,j)=>{if(j!==i&&eligible(j))p.acted=false});players[i].acted=true}
+function humanAction(kind){
+ if(!waiting||current!==0)return;waiting=false;const call=toCall(0),p=players[0];
+ if(kind==='fold'){folded[0]=true;p.acted=true;say('Ты сбрасываешь карты.')}
+ if(kind==='call'){const amt=pay(0,call);p.acted=true;say(amt?'Ты коллируешь '+fmt(amt)+'.':'Ты чекаешь.')}
+ if(kind==='raise'){let amount=Math.max(minRaise,Number($('bet').value)||minRaise);if(call===0){pay(0,0)}else pay(0,call);amount=Math.min(p.chips,amount);if(amount<=0){p.acted=true}else{pay(0,amount);highBet=roundBet[0];minRaise=Math.max(minRaise,amount);players.forEach((q,j)=>{if(j!==0&&eligible(j))q.acted=false});p.acted=true;say('Ты повышаешь до '+fmt(roundBet[0])+'.')}}
+ render();actLoop(1)
+}
+async function advanceStreet(){
+ if(!running)return;waiting=false;
+ if(activeCount()<=1){awardUncontested();return}
+ if(street===0){street=1;deck.pop();board.push(deck.pop(),deck.pop(),deck.pop());say('Флоп: '+board.map(c=>c.r+c.s).join(' '))}
+ else if(street===1){street=2;deck.pop();board.push(deck.pop());say('Тёрн: '+board.at(-1).r+board.at(-1).s)}
+ else if(street===2){street=3;deck.pop();board.push(deck.pop());say('Ривер: '+board.at(-1).r+board.at(-1).s)}
+ else{showdown();return}
+ roundBet=players.map(()=>0);highBet=0;minRaise=40;players.forEach(p=>p.acted=false);
+ if(aliveIds().filter(i=>!folded[i]&&!allin[i]).length<=1&&street<3){while(board.length<5){deck.pop();board.push(deck.pop())}showdown();return}
+ render();await sleep(350);actLoop(nextSeat(dealer,i=>needsAction(i)))
+}
+function awardUncontested(){const winner=players.findIndex((p,i)=>!folded[i]&&!p.out);if(winner<0){showdown();return}players[winner].chips+=pot;say(players[winner].name+' забирает банк '+fmt(pot)+'/ без вскрытия.');pot=0;endHand()}
+function showdown(){
+ street=4;render();
+ const contenders=players.map((p,i)=>({p,i})).filter(x=>!folded[x.i]&&!x.p.out);if(!contenders.length){endHand();return}
+ // Side pots are built from each player's total contribution, including folded players.
+ let levels=[...new Set(contrib.filter(n=>n>0))].sort((a,b)=>a-b),prev=0;
+ for(const level of levels){let amount=0;for(let i=0;i<9;i++){const slice=Math.max(0,Math.min(contrib[i],level)-prev);amount+=slice}const eligibleNow=contenders.filter(x=>contrib[x.i]>=level);if(eligibleNow.length){eligibleNow.sort((a,b)=>cmp(bestHand(b.p.cards,board),bestHand(a.p.cards,board)));const best=bestHand(eligibleNow[0].p.cards,board),winners=eligibleNow.filter(x=>cmp(bestHand(x.p.cards,board),best)===0);const each=Math.floor(amount/winners.length);winners.forEach(x=>x.p.chips+=each);if(winners.length)winners[0].p.chips+=amount-each*winners.length;say('Вскрытие: '+winners.map(x=>x.p.name).join(', ')+' · '+HAND_NAMES[best[0]]+'.')}
+ prev=level}
+ pot=0;endHand()
+}
+function endHand(){
+ players.forEach((p,i)=>{if(p.chips<=0){p.chips=0;p.out=true;folded[i]=true}});
+ const alive=aliveIds();render();if(alive.length<=1){finish(alive[0]);return}
+ dealer=nextSeat(dealer,i=>players[i].chips>0&&!players[i].out);setTimeout(()=>{if(running)startHand()},fast?250:1100)
+}
+function finish(winner){running=false;waiting=false;render();$('turnBadge').textContent='ТУРНИР ОКОНЧЕН';say(winner>=0?players[winner].name+' выигрывает турнир!':'Турнир завершён.');$('modal').classList.remove('hidden');$('modal').querySelector('h2').textContent=winner===0?'Ты выиграл турнир!':'Турнир завершён';$('modal').querySelector('p').textContent=winner===0?'Отлично. Ты обыграл восемь соперников. Начни новый турнир, чтобы повторить тренировку.':'Победитель: '+(winner>=0?players[winner].name:'нет')+'. Попробуй изменить стартовые руки, позиционную игру и размеры ставок.';$('start').textContent='Новый турнир'}
+function showControls(){const call=toCall(0);$('call').textContent=call?'Колл '+fmt(call):'Чек';$('raise').textContent='Рейз';$('fold').disabled=false;$('call').disabled=false;$('raise').disabled=false;$('turnBadge').textContent='ТВОЙ ХОД';$('bet').max=Math.max(40,players[0].chips-call);$('bet').min=Math.min(minRaise,Math.max(40,players[0].chips-call));$('bet').value=Math.min(Number($('bet').value)||100,Number($('bet').max));updateBet()}
+function updateBet(){$('betValue').textContent=fmt(Number($('bet').value))}
+function render(){
+ $('level').textContent=Math.min(10,Math.floor((handNo-1)/3)+1)+' / 10';$('alive').textContent=aliveIds().length;$('pot').textContent='Банк: '+fmt(pot);
+ $('board').innerHTML=board.map(c=>cardHTML(c)).join('')+Array(Math.max(0,5-board.length)).fill('<div class="card" style="opacity:.16;background:#102e22;border:1px solid #ffffff30"></div>').join('');
+ $('seats').innerHTML=players.map((p,i)=>{const active=i===current&&waiting;let cards='';if(i===0&&p.cards.length)cards=p.cards.map(c=>cardHTML(c)).join('');else if(street===4||!running)cards=p.cards.map(c=>cardHTML(c)).join('');else if(p.cards.length&&!folded[i]&&!p.out)cards=cardHTML(null,true)+cardHTML(null,true);return '<div class="seat '+(active?'active ':'')+((p.out||p.chips===0)?'out':'')+'">'+(i===dealer?'<span class="dealer">D</span>':'')+'<div class="name">'+esc(p.name)+'</div><div class="stack">'+fmt(p.chips)+'</div><div class="cards">'+cards+'</div><div class="sub">'+(p.out?'ВЫБЫЛ':folded[i]?'ФОЛД':roundBet[i]?'Ставка '+fmt(roundBet[i]):'')+'</div></div>'}).join('');
+ $('hole').innerHTML=(players[0]?.cards||[]).map(c=>cardHTML(c)).join('');$('playerMeta').textContent='Стек '+fmt(players[0]?.chips||0)+' · В банке '+fmt(contrib[0]||0);
+ $('playerName').textContent='Ты · '+(['BTN','SB','BB','UTG','MP','HJ','CO','UTG+1','MP+1'][(0-dealer+9)%9]);if(!waiting){$('turnBadge').textContent='ОЖИДАНИЕ';['fold','call','raise','bet','minus','plus'].forEach(id=>$(id).disabled=true)}else{['fold','call','raise','bet','minus','plus'].forEach(id=>$(id).disabled=false);showControls()}
+}
+$('fold').onclick=()=>humanAction('fold');$('call').onclick=()=>humanAction('call');$('raise').onclick=()=>humanAction('raise');
+$('bet').oninput=updateBet;$('minus').onclick=()=>{$('bet').value=Math.max(Number($('bet').min),Number($('bet').value)-20);updateBet()};$('plus').onclick=()=>{$('bet').value=Math.min(Number($('bet').max),Number($('bet').value)+20);updateBet()};
+$('start').onclick=setup;$('new').onclick=()=>{$('modal').classList.remove('hidden');$('modal').querySelector('h2').textContent='Новый турнир';$('modal').querySelector('p').textContent='Все стеки будут сброшены до 1 500 фишек. Начать заново?';$('start').textContent='Начать турнир';running=false;waiting=false};
+$('speed').onclick=()=>{fast=!fast;$('speed').textContent='Боты: '+(fast?'быстро':'обычно')};
+$('hint').onclick=()=>{if(!players.length||!players[0].cards.length){say('Начни турнир, чтобы получить разбор.');return}const s=preflopStrength(players[0].cards),v=board.length>=3?bestHand(players[0].cards,board):null;let advice=s>.68?'Сильная стартовая рука: чаще играй агрессивно, но учитывай позицию и размер рейза.':s>.45?'Средняя рука: оцени позицию, размер рейза и количество соперников.':'Слабая рука: чаще фолдь против крупного рейза, особенно без позиции.';if(v)advice+=' Текущая комбинация: '+HAND_NAMES[v[0]]+'.';say('Разбор: '+advice)};
+players=Array.from({length:9},(_,i)=>({name:i===0?'ТЫ':['Тайтовый','Агрессор','Скала','Коллер','Регуляр','Снайпер','Маньяк','Адаптивный'][i-1],chips:START,out:false,style:['human','tightAgg','looseAgg','rock','caller','balanced','nit','maniac','adaptive'][i],cards:[],total:0,street:0,acted:false}));render();$('modal').classList.remove('hidden');
+})();
+</script></body></html>
