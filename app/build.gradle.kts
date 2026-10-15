@@ -11,15 +11,8 @@ android {
         applicationId = "de.freezzzgames.radarscreenbridge"
         minSdk = 23
         targetSdk = 35
-        versionCode = 2
-        versionName = "1.0.0"
-    }
-
-    sourceSets {
-        getByName("main") {
-            // Bundle the standalone game HTML from the repository root as an Android WebView asset.
-            assets.srcDir(rootProject.projectDir)
-        }
+        versionCode = 3
+        versionName = "1.0.1"
     }
 
     compileOptions {
@@ -27,7 +20,5 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
-    kotlinOptions {
-        jvmTarget = "17"
-    }
+    kotlinOptions { jvmTarget = "17" }
 }
