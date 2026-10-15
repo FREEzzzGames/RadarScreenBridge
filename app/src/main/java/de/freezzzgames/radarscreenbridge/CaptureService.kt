@@ -1,6 +1,7 @@
 package de.freezzzgames.radarscreenbridge
 
 import android.app.*
+import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
@@ -12,10 +13,12 @@ import android.media.projection.MediaProjection
 import android.media.projection.MediaProjectionManager
 import android.os.Build
 import android.os.IBinder
+import android.provider.MediaStore
 import android.util.DisplayMetrics
 import android.view.WindowManager
 import java.io.File
 import java.io.FileOutputStream
+import java.io.OutputStream
 import java.util.concurrent.atomic.AtomicBoolean
 
 class CaptureService : Service() {
@@ -23,6 +26,7 @@ class CaptureService : Service() {
     private var reader: ImageReader? = null
     private var display: VirtualDisplay? = null
     private val busy = AtomicBoolean(false)
+    private var sharedPreviewUri: android.net.Uri? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         createChannel()
@@ -54,6 +58,8 @@ class CaptureService : Service() {
         reader?.setOnImageAvailableListener({ r ->
             if (!busy.compareAndSet(false, true)) { r.acquireLatestImage()?.close(); return@setOnImageAvailableListener }
             var image: Image? = null
+            var full: Bitmap? = null
+            var cropped: Bitmap? = null
             try {
                 image = r.acquireLatestImage()
                 if (image != null) {
@@ -62,20 +68,51 @@ class CaptureService : Service() {
                     val pixelStride = plane.pixelStride
                     val rowStride = plane.rowStride
                     val rowPadding = rowStride - pixelStride * w
-                    val full = Bitmap.createBitmap(w + rowPadding / pixelStride, h, Bitmap.Config.ARGB_8888)
+                    full = Bitmap.createBitmap(w + rowPadding / pixelStride, h, Bitmap.Config.ARGB_8888)
                     full.copyPixelsFromBuffer(buffer)
-                    val cropped = Bitmap.createBitmap(full, 0, 0, w, h)
-                    FileOutputStream(File(cacheDir, "screen_preview.jpg")).use { cropped.compress(Bitmap.CompressFormat.JPEG, 45, it) }
-                    cropped.recycle()
-                    full.recycle()
+                    cropped = Bitmap.createBitmap(full, 0, 0, w, h)
+                    // Keep the existing private preview and update one shared gallery image.
+                    FileOutputStream(File(cacheDir, "screen_preview.jpg")).use {
+                        cropped.compress(Bitmap.CompressFormat.JPEG, 55, it)
+                    }
+                    writeSharedPreview(cropped)
                 }
             } catch (_: Exception) {
+                // Screen capture should continue even if gallery storage is unavailable.
             } finally {
+                cropped?.recycle()
+                full?.recycle()
                 image?.close()
                 busy.set(false)
             }
         }, null)
         return START_NOT_STICKY
+    }
+
+    private fun writeSharedPreview(bitmap: Bitmap) {
+        if (Build.VERSION.SDK_INT < 29) {
+            val folder = getExternalFilesDir(android.os.Environment.DIRECTORY_PICTURES) ?: return
+            val file = File(folder, "RadarScreenBridge/screen_preview.jpg")
+            file.parentFile?.mkdirs()
+            FileOutputStream(file).use { bitmap.compress(Bitmap.CompressFormat.JPEG, 55, it) }
+            return
+        }
+
+        var uri = sharedPreviewUri
+        if (uri == null) {
+            val values = ContentValues().apply {
+                put(MediaStore.Images.Media.DISPLAY_NAME, "RadarScreenBridge_screen_preview.jpg")
+                put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
+                put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/RadarScreenBridge")
+            }
+            uri = contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)
+            sharedPreviewUri = uri
+        }
+        if (uri != null) {
+            contentResolver.openOutputStream(uri, "wt")?.use { out ->
+                bitmap.compress(Bitmap.CompressFormat.JPEG, 55, out)
+            }
+        }
     }
 
     private fun createChannel() {
