@@ -1,20 +1,19 @@
-# Texas Hold'em Trainer
+# d3tr01t Holdem
 
-A touch-first, mobile-friendly browser training game for No-Limit Texas Hold'em tournaments.
+Offline Texas Hold'em tournament trainer, packaged as an Android WebView app.
 
-## Run
+## Android APK
+Every push to `main` builds a debug APK using GitHub Actions. Open **Actions → Build d3tr01t Holdem APK → latest successful run → Artifacts → d3tr01t-holdem-apk** to download the APK.
 
-Open `index.html` in a modern browser. The game uses vanilla HTML, CSS and JavaScript and has no build step or external runtime dependencies.
+## App behavior
+- Locked to landscape orientation.
+- Immersive full-screen layout.
+- Offline HTML/JavaScript game bundled from root `index.html`.
+- WebView DOM storage enabled for locally persisted player statistics.
+- No network permission required at runtime.
 
-## Features
+## Build locally
+Requires JDK 17, Android SDK platform 35, and Gradle 8.9:
+`gradle assembleDebug`
 
-- Nine-seat single-table tournament: one human and eight bot profiles.
-- Equal starting stacks, blinds, hole cards, flop, turn, river, folds, calls, raises, showdown and elimination.
-- Poker hand ranking and kicker comparison.
-- Touch-friendly bet slider and action buttons.
-- Bot profiles with different preflop thresholds and aggression levels.
-- Hand-strength hint panel; no real money, accounts, or purchases.
-
-## Important limitations
-
-This is an early training prototype. Bot decisions use lightweight heuristic estimates, not a solver or a calibrated equity engine. Treat the advice as practice feedback rather than expert strategy. Side-pot and edge-case validation, broad automated tests, and accessibility testing remain to be completed.
+The bot logic is heuristic and should not be treated as a GTO solver.
