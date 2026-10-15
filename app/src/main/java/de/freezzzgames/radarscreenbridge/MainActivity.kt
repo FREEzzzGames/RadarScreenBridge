@@ -19,6 +19,10 @@ class MainActivity : Activity() {
     private lateinit var status: TextView
     private lateinit var preview: ImageView
     private val handler = Handler(Looper.getMainLooper())
+    private val cameraActions = setOf(
+        "android.media.action.IMAGE_CAPTURE",
+        "android.media.action.STILL_IMAGE_CAMERA"
+    )
     private val refresh = object : Runnable {
         override fun run() {
             val file = File(cacheDir, "screen_preview.jpg")
@@ -40,20 +44,20 @@ class MainActivity : Activity() {
         }
         status = TextView(this).apply { text = "Radar Screen Bridge — тест"; textSize = 18f }
         val info = TextView(this).apply {
-            text = "Этап 1: захват экрана Android. Передача изображения на часы пока не реализована."
+            text = "Тестовый режим: захват экрана Android. Нажатие кнопки часов сработает только если приложение-компаньон отправляет стандартный Android camera intent. Передача изображения на часы ещё не реализована."
             textSize = 14f
             setPadding(0, 16, 0, 16)
         }
         val start = Button(this).apply {
             text = "Запустить захват экрана"
-            setOnClickListener {
-                val mgr = getSystemService(MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
-                startActivityForResult(mgr.createScreenCaptureIntent(), requestCapture)
-            }
+            setOnClickListener { requestScreenCapture() }
         }
         val stop = Button(this).apply {
             text = "Остановить захват"
-            setOnClickListener { stopService(Intent(this@MainActivity, CaptureService::class.java)); status.text = "Захват остановлен" }
+            setOnClickListener {
+                stopService(Intent(this@MainActivity, CaptureService::class.java))
+                status.text = "Захват остановлен"
+            }
         }
         preview = ImageView(this).apply { adjustViewBounds = true; scaleType = ImageView.ScaleType.FIT_CENTER }
         root.addView(status)
@@ -63,6 +67,16 @@ class MainActivity : Activity() {
         root.addView(preview, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f))
         setContentView(root)
         handler.post(refresh)
+
+        if (intent?.action in cameraActions) {
+            status.text = "Получена команда камеры • запрос разрешения на захват"
+            root.postDelayed({ requestScreenCapture() }, 350)
+        }
+    }
+
+    private fun requestScreenCapture() {
+        val mgr = getSystemService(MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
+        startActivityForResult(mgr.createScreenCaptureIntent(), requestCapture)
     }
 
     @Deprecated("Deprecated in Android API")
@@ -75,6 +89,8 @@ class MainActivity : Activity() {
             }
             startForegroundService(svc)
             status.text = "Разрешение получено, запуск захвата…"
+        } else if (requestCode == requestCapture) {
+            status.text = "Захват не запущен: разрешение не предоставлено"
         }
     }
 
